@@ -1,0 +1,11 @@
+Model Information:
+* title:	Robot Arm
+* source:	https://sketchfab.com/3d-models/robot-arm-9df6da13eea144a9ba8f00026887ac53
+* author:	moriyork (https://sketchfab.com/moriyork)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Robot Arm" (https://sketchfab.com/3d-models/robot-arm-9df6da13eea144a9ba8f00026887ac53) by moriyork (https://sketchfab.com/moriyork) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
