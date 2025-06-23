@@ -35,8 +35,11 @@ export default function Menu() {
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-4">
               <Link href="/" className={navLinkClasses}>Startseite</Link>
-              <Link href="/#process" scroll={true} className={navLinkClasses}>Unser Prozess</Link> {/* Example for internal link */}
-              <Link href="/#why-us" scroll={true} className={navLinkClasses}>Warum wir?</Link> {/* Example for internal link */}
+              <Link href="/about" className={navLinkClasses}>Über Mich</Link> {/* Added About Link */}
+              {/* Placeholder for Services Dropdown - to be implemented with service pages */}
+              {/* <Link href="/services" className={navLinkClasses}>Services</Link> */}
+              <Link href="/#process" scroll={true} className={navLinkClasses}>Unser Prozess</Link>
+              <Link href="/#why-us" scroll={true} className={navLinkClasses}>Warum wir?</Link>
               <Link href="/showcases" className={navLinkClasses}>Showcases</Link>
               <Link href="/roi" className={navLinkClasses}>Potenzialanalyse</Link>
               <Link href="/#contact" scroll={true} className="bg-accent text-secondary px-4 py-2 rounded-md text-sm font-medium hover:bg-accent/90 transition-colors">
@@ -67,6 +70,8 @@ export default function Menu() {
         <div className="md:hidden bg-secondary shadow-lg">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             <Link href="/" className={mobileNavLinkClasses} onClick={toggleMenu}>Startseite</Link>
+            <Link href="/about" className={mobileNavLinkClasses} onClick={toggleMenu}>Über Mich</Link> {/* Added About Link */}
+            {/* <Link href="/services" className={mobileNavLinkClasses} onClick={toggleMenu}>Services</Link> */}
             <Link href="/#process" scroll={true} className={mobileNavLinkClasses} onClick={toggleMenu}>Unser Prozess</Link>
             <Link href="/#why-us" scroll={true} className={mobileNavLinkClasses} onClick={toggleMenu}>Warum wir?</Link>
             <Link href="/showcases" className={mobileNavLinkClasses} onClick={toggleMenu}>Showcases</Link>

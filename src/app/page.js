@@ -1,22 +1,23 @@
 // app/page.js
 import Hero from '@/components/Hero';
+import ImpactNumbers from '@/components/ImpactNumbers'; // Import the new component
 import ProcessSection from '@/components/ProcessSection';
 import WhyMeSection from '@/components/WhyMeSection';
 import ContactForm from '@/components/ContactForm';
 import Menu from '@/components/Menu';
-// Removed UseCaseValidator from direct import, as it's on the /roi page.
-// Consider adding a "Call to Action" component for the ROI page if needed.
+import Footer from '@/components/Footer'; // Import Footer
 
 export default function HomePage() {
   return (
-    <div className="bg-secondary"> {/* Ensure a base background for the page */}
+    <div className="bg-secondary flex flex-col min-h-screen"> {/* Ensure a base background and full height */}
       <Menu />
-      <Hero />
-      <main> {/* Wrap sections in main for semantic HTML */}
-        <section id="process"> {/* ID for menu linking */}
+      <main className="flex-grow"> {/* Wrap sections in main for semantic HTML and allow footer to push down */}
+        <Hero />
+        <ImpactNumbers /> {/* Add the ImpactNumbers section here */}
+        <section id="process">
           <ProcessSection />
         </section>
-        <section id="why-us"> {/* ID for menu linking */}
+        <section id="why-us">
           <WhyMeSection />
         </section>
         {/* Optional: Add a CTA section for ROI calculator or Showcases */}
@@ -38,10 +39,11 @@ export default function HomePage() {
           </div>
         </section>
         */}
-        <section id="contact"> {/* ID for menu linking */}
+        <section id="contact">
           <ContactForm />
         </section>
       </main>
+      <Footer /> {/* Add Footer to the end of the page */}
     </div>
   );
 }
