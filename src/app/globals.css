@@ -3,10 +3,80 @@
 @tailwind utilities;
 
 @layer base {
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-headline;
+  html {
+    @apply scroll-smooth; /* Smooth scrolling for anchor links */
   }
   body {
-    @apply font-body;
+    @apply font-body bg-secondary text-neutral antialiased;
+    /* `antialiased` for better font rendering */
+    /* Default background and text colors are set here and in RootLayout for consistency */
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-headline text-primary; /* Default heading color */
+  }
+
+  h1 {
+    @apply text-4xl sm:text-5xl font-bold; /* Responsive base for H1 */
+  }
+  h2 {
+    @apply text-3xl sm:text-4xl font-bold; /* Responsive base for H2 */
+  }
+  h3 {
+    @apply text-2xl sm:text-3xl font-semibold; /* Responsive base for H3 */
+  }
+  /* Add more for h4, h5, h6 if needed with decreasing sizes and weights */
+
+  p {
+    @apply text-base leading-relaxed; /* Default paragraph styling */
+  }
+
+  a {
+    @apply text-accent hover:text-accent/80 transition-colors duration-200;
+    /* Default link styling */
+  }
+
+  /* Custom scrollbar for a more modern look (optional, Webkit specific) */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-secondary;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-neutral/50 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-neutral/70;
+  }
+
+  /* Styling for range inputs to match theme (optional) */
+  input[type="range"].accent-primary {
+    /* For browsers that support accent-color */
+    accent-color: theme('colors.primary');
+  }
+  /* Fallback for Webkit browsers if accent-color is not enough */
+  input[type="range"].accent-primary::-webkit-slider-thumb {
+    @apply bg-primary;
+  }
+  input[type="range"].accent-primary::-moz-range-thumb {
+    @apply bg-primary;
+  }
+
+  /* Ensure focus rings are visible and use a theme color */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-offset-2 ring-accent ring-offset-secondary;
+  }
+
+}
+
+@layer components {
+  /* Example of a custom component class if needed, though Tailwind utility-first is preferred */
+  .btn-primary {
+    @apply bg-primary text-secondary px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors;
+  }
+  .btn-accent {
+    @apply bg-accent text-secondary px-6 py-3 rounded-lg font-semibold hover:bg-accent/90 transition-colors;
   }
 }

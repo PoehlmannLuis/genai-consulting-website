@@ -1,0 +1,59 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main # Or your default branch
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # To read the repository contents
+      pages: write # To deploy to GitHub Pages
+      id-token: write # To authenticate with GitHub Actions
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }} # Output the deployment URL
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Specify your Node.js version
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Make EmailJS environment variables available to the build process
+      - name: Set up EmailJS environment variables
+        run: |
+          echo "NEXT_PUBLIC_EMAILJS_SERVICE_ID=${{ secrets.NEXT_PUBLIC_EMAILJS_SERVICE_ID }}" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_EMAILJS_TEMPLATE_ID=${{ secrets.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID }}" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=${{ secrets.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY }}" >> $GITHUB_ENV
+
+      - name: Build Next.js site
+        run: npm run build
+        # The `next build` command will automatically use the `output: 'export'` from next.config.mjs
+        # and place the static files in the 'out' directory.
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./out # Next.js static export outputs to 'out' directory
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+        # This action will automatically deploy the artifact uploaded in the previous step
+        # to the gh-pages environment.
+        # The URL will be available at ${{ steps.deployment.outputs.page_url }}
+        # Ensure your repository's Pages settings are configured to deploy from GitHub Actions.

@@ -1,6 +1,6 @@
 "use client";
-import React, { useState } from 'react';
-import { Chart } from 'react-chartjs-2';
+import React, { useState, useEffect } from 'react'; // Added useEffect
+import { Bar } from 'react-chartjs-2'; // Corrected import for Bar chart
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -10,6 +10,7 @@ import {
     Tooltip,
     Legend,
 } from 'chart.js';
+import { InformationCircleIcon } from '@heroicons/react/24/outline';
 
 ChartJS.register(
     CategoryScale,
@@ -20,95 +21,121 @@ ChartJS.register(
     Legend
 );
 
+// Define use cases with updated German descriptions and more corporate focus
+const useCasesData = {
+    customerService: {
+        name: "Automatisierung im Kundenservice",
+        description: "Reduzieren Sie Antwortzeiten und steigern Sie die Effizienz durch KI-gestützte Bearbeitung von Standardanfragen.",
+        inputs: [
+            { id: "csEmployeeCount", label: "Anzahl Mitarbeiter im Kundenservice", type: "range", min: 1, max: 1000, default: 50, unit: "Mitarbeiter" },
+            { id: "csAvgSalary", label: "Durchschn. Jahresgehalt pro MA (EUR)", type: "number", default: 55000, unit: "€" },
+            { id: "csInquiriesPerMonthPerEmp", label: "Monatl. Anfragen pro MA", type: "number", default: 200, unit: "Anfragen" },
+            { id: "csAutomationRate", label: "Automatisierungsrate durch GenAI (%)", type: "range", min: 0, max: 80, default: 30, unit: "%" },
+            { id: "csTimeSavePerAutomatedInquiry", label: "Zeitersparnis pro autom. Anfrage (%)", type: "range", min: 0, max: 100, default: 50, unit: "%" },
+        ],
+        calculation: (inputs, solutionCost) => {
+            const hourlyRate = inputs.csAvgSalary / (52 * 40); // Approx. hourly rate
+            const totalMonthlyInquiries = inputs.csEmployeeCount * inputs.csInquiriesPerMonthPerEmp;
+            const automatedInquiries = totalMonthlyInquiries * (inputs.csAutomationRate / 100);
+            // Assuming avg handling time of 10 mins (0.166 hours) for an inquiry that can be automated
+            const timeSavedPerMonth = automatedInquiries * 0.166 * (inputs.csTimeSavePerAutomatedInquiry / 100);
+            const costSavedPerYear = (timeSavedPerMonth * hourlyRate * 12);
+            return {
+                costSavedPerYear: costSavedPerYear,
+                netCostSavingPerYear: costSavedPerYear - solutionCost,
+                keyMetric: `${(timeSavedPerMonth).toFixed(0)} Std. / Monat`,
+                keyMetricLabel: "Zeitersparnis"
+            };
+        },
+    },
+    contentCreation: {
+        name: "Effizienzsteigerung in der Content-Erstellung",
+        description: "Beschleunigen Sie die Erstellung von Marketingtexten, Produktbeschreibungen oder internen Dokumentationen.",
+        inputs: [
+            { id: "ccTeamSize", label: "Anzahl Mitarbeiter Content/Marketing", type: "range", min: 1, max: 200, default: 10, unit: "Mitarbeiter" },
+            { id: "ccAvgSalary", label: "Durchschn. Jahresgehalt pro MA (EUR)", type: "number", default: 65000, unit: "€" },
+            { id: "ccHoursPerWeekPerEmpOnContent", label: "Wöchentl. Stunden für Content pro MA", type: "number", default: 15, unit: "Std." },
+            { id: "ccProductivityGain", label: "Produktivitätssteigerung durch GenAI (%)", type: "range", min: 0, max: 100, default: 25, unit: "%" },
+        ],
+        calculation: (inputs, solutionCost) => {
+            const hourlyRate = inputs.ccAvgSalary / (52 * 40);
+            const totalWeeklyHoursOnContent = inputs.ccTeamSize * inputs.ccHoursPerWeekPerEmpOnContent;
+            const hoursSavedPerWeek = totalWeeklyHoursOnContent * (inputs.ccProductivityGain / 100);
+            const costSavedPerYear = (hoursSavedPerWeek * hourlyRate * 52);
+            return {
+                costSavedPerYear: costSavedPerYear,
+                netCostSavingPerYear: costSavedPerYear - solutionCost,
+                keyMetric: `${(hoursSavedPerWeek * 4.33).toFixed(0)} Std. / Monat`, // Approx. 4.33 weeks/month
+                keyMetricLabel: "Gewonnene Produktivstunden"
+            };
+        },
+    },
+    processAutomation: {
+        name: "Automatisierung von Geschäftsprozessen",
+        description: "Identifizieren und automatisieren Sie repetitive administrative Aufgaben oder Datenverarbeitungsschritte.",
+        inputs: [
+            { id: "paEmployeesInvolved", label: "Anzahl MA in relevanten Prozessen", type: "range", min: 1, max: 500, default: 20, unit: "Mitarbeiter" },
+            { id: "paAvgSalary", label: "Durchschn. Jahresgehalt pro MA (EUR)", type: "number", default: 60000, unit: "€" },
+            { id: "paHoursPerWeekOnAutomatedTasks", label: "Wöchentl. Stunden für autom. Aufgaben pro MA", type: "number", default: 8, unit: "Std." },
+            { id: "paEfficiencyGain", label: "Effizienzsteigerung durch GenAI (%)", type: "range", min: 0, max: 90, default: 40, unit: "%" },
+        ],
+        calculation: (inputs, solutionCost) => {
+            const hourlyRate = inputs.paAvgSalary / (52 * 40);
+            const totalWeeklyHoursOnTasks = inputs.paEmployeesInvolved * inputs.paHoursPerWeekOnAutomatedTasks;
+            const hoursSavedPerWeek = totalWeeklyHoursOnTasks * (inputs.paEfficiencyGain / 100);
+            const costSavedPerYear = (hoursSavedPerWeek * hourlyRate * 52);
+            return {
+                costSavedPerYear: costSavedPerYear,
+                netCostSavingPerYear: costSavedPerYear - solutionCost,
+                keyMetric: `${(costSavedPerYear / 12).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })} / Monat`,
+                keyMetricLabel: "Direkte Kostensenkung"
+            };
+        },
+    }
+};
+
+
 export default function UseCaseValidator() {
-    // 1. Define Use Cases and their input fields & calculations
-    const useCases = {
-        customerService: {
-            name: "Kundenservice Automatisierung",
-            inputs: [
-                { id: "csEmployeeCount", label: "Anzahl der Kundenservicemitarbeiter", type: "range", min: 1, max: 500, default: 50 },
-                { id: "csHourlyRate", label: "Durchschnittlicher Stundensatz (EUR)", type: "number", default: 40 },
-                { id: "csInquiriesPerMonth", label: "Durchschnittliche monatliche Kundenanfragen pro Mitarbeiter", type: "number", default: 100 },
-                { id: "csAutomationPercentage", label: "Prozentsatz der Anfragen, die durch GenAI automatisiert werden können (%)", type: "range", min: 0, max: 100, default: 30 },
-                { id: "csTimeSavingPerInquiry", label: "Zeitersparnis pro automatisierter Anfrage durch GenAI (%)", type: "range", min: 0, max: 100, default: 40 },
-            ],
-            calculation: (inputs, solutionCost) => {
-                const employeeCount = inputs.csEmployeeCount;
-                const hourlyRate = inputs.csHourlyRate;
-                const inquiriesPerMonth = inputs.csInquiriesPerMonth;
-                const automationPercentage = inputs.csAutomationPercentage / 100;
-                const timeSavingPercentage = inputs.csTimeSavingPerInquiry / 100;
-
-                const automatedInquiriesPerMonth = employeeCount * inquiriesPerMonth * automationPercentage;
-                // Assuming average handling time per inquiry before GenAI is 15 minutes (0.25 hours) - this is an assumption!
-                const assumedHandlingTimeBeforeGenAI = 0.25; // Hours
-                const hoursSavedPerMonth = automatedInquiriesPerMonth * assumedHandlingTimeBeforeGenAI * timeSavingPercentage;
-                const costSavedPerMonth = hoursSavedPerMonth * hourlyRate;
-                const costSavedPerYear = costSavedPerMonth * 12;
-                const netCostSavingPerYear = costSavedPerYear - solutionCost;
-
-
-                return { hoursSavedPerMonth, costSavedPerYear, netCostSavingPerYear };
-            },
-        },
-        contentCreation: {
-            name: "Inhaltserstellung",
-            inputs: [
-                { id: "ccEmployeeCount", label: "Anzahl der Mitarbeiter im Bereich Inhaltserstellung/Marketing", type: "range", min: 1, max: 100, default: 10 },
-                { id: "ccHourlyRate", label: "Durchschnittlicher Stundensatz (EUR)", type: "number", default: 50 },
-                { id: "ccHoursPerMonth", label: "Durchschnittliche Stunden pro Monat für Inhaltserstellung pro Mitarbeiter", type: "number", default: 40 },
-                { id: "ccSupportPercentage", label: "Prozentsatz der Inhaltserstellungsaufgaben, die durch GenAI unterstützt werden können (%)", type: "range", min: 0, max: 100, default: 50 },
-                { id: "ccTimeSavingPerTask", label: "Zeitersparnis pro Inhaltserstellungsaufgabe mit GenAI-Unterstützung (%)", type: "range", min: 0, max: 100, default: 30 },
-            ],
-            calculation: (inputs, solutionCost) => {
-                const employeeCount = inputs.ccEmployeeCount;
-                const hourlyRate = inputs.ccHourlyRate;
-                const hoursPerMonth = inputs.ccHoursPerMonth;
-                const supportPercentage = inputs.ccSupportPercentage / 100;
-                const timeSavingPercentage = inputs.ccTimeSavingPerTask / 100;
-
-                const totalContentCreationHours = employeeCount * hoursPerMonth;
-                const supportedHours = totalContentCreationHours * supportPercentage;
-                const hoursSavedPerMonth = supportedHours * timeSavingPercentage;
-                const costSavedPerMonth = hoursSavedPerMonth * hourlyRate;
-                const costSavedPerYear = costSavedPerMonth * 12;
-                const netCostSavingPerYear = costSavedPerYear - solutionCost;
-
-
-                return { hoursSavedPerMonth, costSavedPerYear, netCostSavingPerYear };
-            },
-        },
-        // Add more use cases here (Data Analysis, Admin Tasks, etc.) following the same structure
-    };
-
-    const useCaseOptions = Object.entries(useCases).map(([key, useCase]) => ({
+    const useCaseOptions = Object.entries(useCasesData).map(([key, useCase]) => ({
         value: key,
         label: useCase.name,
     }));
 
+    const [selectedUseCaseKey, setSelectedUseCaseKey] = useState(useCaseOptions[0].value);
+    const [inputValues, setInputValues] = useState({});
+    const [solutionCost, setSolutionCost] = useState(10000); // Default annual solution cost
 
-    const [selectedUseCaseKey, setSelectedUseCaseKey] = useState(useCaseOptions[0].value); // Default to first use case
-    const selectedUseCase = useCases[selectedUseCaseKey];
-    const [inputValues, setInputValues] = useState(() => {
-        // Initialize input values based on default values from selectedUseCase
+    // Effect to initialize/update inputValues when selectedUseCaseKey changes
+    useEffect(() => {
+        const currentUseCase = useCasesData[selectedUseCaseKey];
         const initialValues = {};
-        selectedUseCase.inputs.forEach(input => {
+        currentUseCase.inputs.forEach(input => {
             initialValues[input.id] = input.default;
         });
-        return initialValues;
-    });
-    const [solutionCost, setSolutionCost] = useState(0); // State for solution cost
+        setInputValues(initialValues);
+    }, [selectedUseCaseKey]);
 
-    const calculationResult = selectedUseCase.calculation(inputValues, solutionCost);
+    const selectedUseCase = useCasesData[selectedUseCaseKey];
+    // Ensure calculationResult is only computed if inputValues is populated
+    const calculationResult = Object.keys(inputValues).length > 0 ? selectedUseCase.calculation(inputValues, solutionCost) : { costSavedPerYear: 0, netCostSavingPerYear: 0, keyMetric: "N/A", keyMetricLabel: "N/A" };
 
     const chartData = {
-        labels: ['Zeitersparnis (Monat)', 'Kostenersparnis (Jahr)'],
+        labels: ['Jährliche Brutto-Einsparung', 'Jährliche Netto-Einsparung (nach Lösungkosten)'],
         datasets: [
             {
-                label: 'GenAI Benefit',
-                data: [calculationResult.hoursSavedPerMonth, calculationResult.costSavedPerYear],
-                backgroundColor: ['rgba(0, 204, 102, 0.7)', 'rgba(0, 102, 204, 0.7)'], // Consider using Tailwind colors for chart
-                borderColor: ['rgba(0, 204, 102, 1)', 'rgba(0, 102, 204, 1)'], // Consider using Tailwind colors for chart
+                label: 'Potenzielle Einsparungen (€)',
+                data: [
+                    Math.max(0, calculationResult.costSavedPerYear), // Ensure non-negative for chart
+                    Math.max(0, calculationResult.netCostSavingPerYear)
+                ],
+                backgroundColor: [
+                    'rgba(14, 71, 36, 0.7)', // primary color with opacity
+                    'rgba(85, 64, 38, 0.7)'  // accent color with opacity
+                ],
+                borderColor: [
+                    '#0E4724', // primary
+                    '#554026'  // accent
+                ],
                 borderWidth: 1,
             },
         ],
@@ -116,38 +143,27 @@ export default function UseCaseValidator() {
 
     const chartOptions = {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
-            legend: {
-                display: false,
-            },
-            title: {
-                display: false,
-            },
-            tooltip: { // Example tooltip customization (consider more detailed tooltips if needed)
+            legend: { display: true, position: 'top', labels: { color: '#52525B'} }, // text-neutral
+            title: { display: true, text: 'Jährliches Einsparungspotenzial', color: '#0E4724', font: {size: 18}}, // text-primary
+            tooltip: {
                 callbacks: {
-                    label: (context) => {
-                        let label = context.dataset.label || '';
-                        if (label) {
-                            label += ': ';
-                        }
-                        if (context.label === 'Zeitersparnis (Monat)') {
-                            label += `${context.formattedValue} Stunden`;
-                        } else if (context.label === 'Kostenersparnis (Jahr)') {
-                            label += `${context.formattedValue} €`;
-                        }
-                        return label;
-                    }
+                    label: (context) => `${context.dataset.label}: ${context.formattedValue} €`
                 }
             }
         },
         scales: {
             y: {
                 beginAtZero: true,
-                title: {
-                    display: true,
-                    text: 'Wert',
-                },
+                title: { display: true, text: 'Einsparungen in EUR (€)', color: '#52525B' }, // text-neutral
+                ticks: { color: '#52525B' }, // text-neutral
+                grid: { color: 'rgba(82, 82, 91, 0.1)'} // neutral-focus/10
             },
+            x: {
+                ticks: { color: '#52525B' }, // text-neutral
+                grid: { display: false }
+            }
         },
     };
 
@@ -155,35 +171,40 @@ export default function UseCaseValidator() {
         setInputValues(prevValues => ({ ...prevValues, [inputId]: parseFloat(value) }));
     };
 
-    return (
-        <section className="py-20 bg-secondary"> {/* bg-gray-50 replaced with bg-secondary */}
-            <div className="container mx-auto px-4 text-center">
-                <h2 className="text-3xl font-bold mb-8 text-primary">Wie viel Zeit/Kosten spart Ihnen GenAI?</h2> {/* text-3xl font-bold mb-8  and added text-primary */}
-                {/* Explanatory Text about the calculator would go here */}
+    const handleCostChange = (e) => {
+        const value = e.target.value;
+        setSolutionCost(value === '' ? 0 : parseFloat(value));
+    };
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div>
-                        <div className="mb-6">
-                            <label htmlFor="useCase" className="block text-neutral text-sm font-bold mb-2"> {/* text-gray-700 replaced with text-neutral */}
-                                Anwendungsfall auswählen
-                            </label>
+
+    return (
+        <section className="py-12 md:py-16 bg-white rounded-xl shadow-2xl">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="text-left mb-10"> {/* Changed to text-left for a more structured feel */}
+                     <h2 className="text-2xl sm:text-3xl font-semibold text-primary mb-3">Interaktiver Potenzialrechner</h2>
+                     <p className="text-neutral text-base md:text-lg">{selectedUseCase.description}</p>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 md:gap-12 items-start">
+                    {/* Input Controls Column */}
+                    <div className="lg:col-span-2 bg-secondary p-6 rounded-lg shadow-md space-y-6">
+                        <div>
+                            <label htmlFor="useCaseSelect" className="block text-sm font-medium text-neutral mb-1">Anwendungsfall wählen:</label>
                             <select
-                                id="useCase"
-                                className="w-full p-2 border rounded text-neutral" // text-gray-700 implicitly replaced with text-neutral, added text-neutral class
+                                id="useCaseSelect"
+                                className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-neutral placeholder-gray-400 bg-white"
                                 value={selectedUseCaseKey}
                                 onChange={(e) => setSelectedUseCaseKey(e.target.value)}
                             >
                                 {useCaseOptions.map(option => (
-                                    <option key={option.value} value={option.value} className="text-neutral">{option.label}</option> // added text-neutral to option
+                                    <option key={option.value} value={option.value}>{option.label}</option>
                                 ))}
                             </select>
                         </div>
 
                         {selectedUseCase.inputs.map(input => (
-                            <div key={input.id} className="mb-6">
-                                <label htmlFor={input.id} className="block text-neutral text-sm font-bold mb-2"> {/* text-gray-700 replaced with text-neutral */}
-                                    {input.label}
-                                </label>
+                            <div key={input.id}>
+                                <label htmlFor={input.id} className="block text-sm font-medium text-neutral mb-1">{input.label}:</label>
                                 {input.type === 'range' ? (
                                     <>
                                         <input
@@ -191,64 +212,66 @@ export default function UseCaseValidator() {
                                             id={input.id}
                                             min={input.min}
                                             max={input.max}
-                                            value={inputValues[input.id]}
+                                            value={inputValues[input.id] || input.default} // Ensure value is defined
                                             onChange={(e) => handleInputChange(input.id, e.target.value)}
-                                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" // consider styling the range input further if needed with custom colors
+                                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
                                         />
-                                        <p className="text-neutral text-sm mt-1">Aktuell: {inputValues[input.id]} {input.type === 'range' && input.id.includes('Percentage') ? '%' : ''}</p> {/* text-gray-600 replaced with text-neutral */}
+                                        <p className="text-neutral text-xs mt-1 text-right">{inputValues[input.id] || input.default} {input.unit}</p>
                                     </>
                                 ) : (
                                     <input
                                         type="number"
                                         id={input.id}
-                                        value={inputValues[input.id]}
+                                        value={inputValues[input.id] || input.default} // Ensure value is defined
                                         onChange={(e) => handleInputChange(input.id, e.target.value)}
-                                        className="w-full p-2 border rounded text-neutral" // text-gray-700 implicitly replaced with text-neutral, added text-neutral class
+                                        className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-neutral placeholder-gray-400"
                                     />
                                 )}
                             </div>
                         ))}
-                        <div className="mb-6">
-                            <label htmlFor="solutionCost" className="block text-neutral text-sm font-bold mb-2"> {/* text-gray-700 replaced with text-neutral */}
-                                Geschätzte jährliche GenAI-Lösungskosten (EUR)
-                            </label>
+                        <div>
+                            <label htmlFor="solutionCost" className="block text-sm font-medium text-neutral mb-1">Geschätzte jährliche GenAI-Lösungskosten (EUR):</label>
                             <input
                                 type="number"
                                 id="solutionCost"
                                 value={solutionCost}
-                                onChange={(e) => setSolutionCost(parseFloat(e.target.value))}
-                                className="w-full p-2 border rounded text-neutral" // text-gray-700 implicitly replaced with text-neutral, added text-neutral class
+                                onChange={handleCostChange}
+                                placeholder="z.B. 10000"
+                                className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-neutral placeholder-gray-400"
                             />
-                            <p className="text-neutral text-sm mt-1">Optionale Angabe für Netto-ROI Berechnung</p> {/* text-gray-600 replaced with text-neutral */}
+                            <p className="text-xs text-neutral mt-1 flex items-center">
+                                <InformationCircleIcon className="h-4 w-4 mr-1 inline"/>
+                                Berücksichtigt Lizenzgebühren, Infrastruktur, Wartung etc.
+                            </p>
                         </div>
-
-
                     </div>
-                    <div>
-                        <div className="bg-secondary shadow-md rounded-lg p-6"> {/* bg-white replaced with bg-secondary */}
-                            <h3 className="text-xl font-semibold mb-4 text-primary">Ihr GenAI Sparpotenzial für {selectedUseCase.name}</h3> {/* text-xl font-semibold mb-4 and added text-primary */}
-                            <div className="mb-4">
-                                <p className="text-neutral">Geschätzte Zeitersparnis pro Monat:</p> {/* text-gray-700 replaced with text-neutral */}
-                                <p className="text-2xl font-bold text-accent">≥{calculationResult.hoursSavedPerMonth.toFixed(0)} Stunden</p> {/* growth-green-text replaced with text-accent */}
-                            </div>
-                            <div>
-                                <p className="text-neutral">Geschätzte jährliche Kostenersparnis:</p> {/* text-gray-700 replaced with text-neutral */}
-                                <p className="text-2xl font-bold text-accent">{calculationResult.costSavedPerYear.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</p> {/* growth-green-text replaced with text-accent */}
-                            </div>
-                            {solutionCost > 0 && (
-                                <div className="mt-4">
-                                    <p className="text-neutral">Netto-Kostenersparnis nach Abzug der Lösungskosten:</p> {/* text-gray-700 replaced with text-neutral */}
-                                    <p className="text-2xl font-bold text-accent">{calculationResult.netCostSavingPerYear > 0 ? calculationResult.netCostSavingPerYear.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : 'Keine Nettoersparnis' }</p> {/* growth-green-text replaced with text-accent */}
-                                </div>
-                            )}
 
-                            <div className="mt-6">
-                                <Chart type='bar' data={chartData} options={chartOptions} />
+                    {/* Results and Chart Column */}
+                    <div className="lg:col-span-3 bg-secondary p-6 rounded-lg shadow-md">
+                        <h3 className="text-xl sm:text-2xl font-semibold mb-6 text-primary text-center">Ihr geschätztes Einsparungspotenzial für "{selectedUseCase.name}"</h3>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8 text-center">
+                            <div className="bg-primary/10 p-4 rounded-lg">
+                                <p className="text-sm text-primary font-medium">{calculationResult.keyMetricLabel}</p>
+                                <p className="text-2xl font-bold text-primary">{calculationResult.keyMetric}</p>
+                            </div>
+                            <div className="bg-accent/10 p-4 rounded-lg">
+                                <p className="text-sm text-accent font-medium">Jährliche Netto-Einsparung</p>
+                                <p className="text-2xl font-bold text-accent">
+                                    {calculationResult.netCostSavingPerYear >= 0 ?
+                                     calculationResult.netCostSavingPerYear.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }) :
+                                     `-${Math.abs(calculationResult.netCostSavingPerYear).toLocaleString('de-DE', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+                                    }
+                                </p>
                             </div>
                         </div>
-                        {/* Success Story Snippets/Links could go here */}
-                        {/* Disclaimer Text would go here */}
-                        {/* Call to Action Button would go here */}
+
+                        <div className="h-[300px] md:h-[400px] w-full"> {/* Fixed height container for chart */}
+                            <Bar data={chartData} options={chartOptions} />
+                        </div>
+                        <p className="text-xs text-neutral mt-6 text-center italic">
+                            Hinweis: Diese Berechnung dient als erste Schätzung und basiert auf Ihren Eingaben und allgemeinen Annahmen. Eine detaillierte Analyse ist für eine genaue ROI-Prognose erforderlich.
+                        </p>
                     </div>
                 </div>
             </div>

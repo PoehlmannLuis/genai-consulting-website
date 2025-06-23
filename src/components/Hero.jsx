@@ -1,87 +1,112 @@
 "use client";
 
 import { motion } from 'framer-motion';
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import Link from 'next/link'; // Import Link for navigation
+import Link from 'next/link';
 
 export default function Hero() {
     const canvasRef = useRef(null);
+    const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
+        setIsMounted(true);
+        if (typeof window === 'undefined') return; // Ensure this runs only on client
+
+        const currentCanvas = canvasRef.current;
+        if (!currentCanvas) return;
+
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / 400, 0.1, 1000); // Reduced canvas width
-        const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current, alpha: true }); // Enable alpha for transparent background
-        renderer.setSize(window.innerWidth, 400); // Reduced canvas height
+        // Adjust camera for different screen sizes
+        const camera = new THREE.PerspectiveCamera(75, currentCanvas.clientWidth / currentCanvas.clientHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas: currentCanvas, alpha: true });
+        renderer.setSize(currentCanvas.clientWidth, currentCanvas.clientHeight);
+        renderer.setPixelRatio(window.devicePixelRatio); // For sharper rendering on high DPI screens
 
-        // Load 3D Model
+        let model;
         const loader = new GLTFLoader();
-        loader.load('/robot_arm/scene.gltf', function (gltf) { // Assuming you put the gltf in public/robot_arm
-            const model = gltf.scene;
-            model.scale.set(0.7, 0.7, 0.7); // Increased scale - make it bigger
+        loader.load('/robot_arm/scene.gltf', function (gltf) {
+            model = gltf.scene;
+            model.scale.set(0.6, 0.6, 0.6); // Adjusted scale for mobile
 
-            // Center the model (optional, if needed based on model origin)
             const boundingBox = new THREE.Box3().setFromObject(model);
             const center = boundingBox.getCenter(new THREE.Vector3());
-            model.position.sub(center); // Center model at origin
-
+            model.position.sub(center);
             scene.add(model);
-
-            // Animation adjustments for smoother, smaller radius rotation
-            function animate() {
-                requestAnimationFrame(animate);
-
-                // Rotate around its local Y axis with a smaller increment
-                model.rotation.y += 0.005; // Reduced rotation speed for smoother effect
-
-                renderer.render(scene, camera);
-            }
-            animate();
         }, undefined, function (error) {
             console.error('An error happened loading the 3D model', error);
         });
 
-
-        // Lighting - unchanged
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7); // Slightly increased ambient light
         scene.add(ambientLight);
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8); // Slightly increased directional light
         directionalLight.position.set(5, 5, 5);
         scene.add(directionalLight);
 
+        camera.position.z = 4; // Adjusted camera position for better view on smaller screens
 
-        camera.position.z = 5;
+        function animate() {
+            if (!model) return; // Ensure model is loaded
+            requestAnimationFrame(animate);
+            model.rotation.y += 0.005;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        const handleResize = () => {
+            if (currentCanvas) {
+                camera.aspect = currentCanvas.clientWidth / currentCanvas.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(currentCanvas.clientWidth, currentCanvas.clientHeight);
+            }
+        };
+
+        window.addEventListener('resize', handleResize);
 
         return () => {
-            // Cleanup on component unmount
+            window.removeEventListener('resize', handleResize);
             renderer.dispose();
+            // Dispose model, geometries, materials if necessary
+            if (model) {
+                scene.remove(model);
+                model.traverse(object => {
+                    if (object.geometry) object.geometry.dispose();
+                    if (object.material) {
+                        if (Array.isArray(object.material)) {
+                            object.material.forEach(material => material.dispose());
+                        } else {
+                            object.material.dispose();
+                        }
+                    }
+                });
+            }
         };
-    }, []);
+    }, [isMounted]); // Rerun effect if isMounted changes (e.g. for HMR, though mainly for initial client-side run)
 
     return (
-        <section className="min-h-screen bg-primary flex items-center justify-center text-secondary relative overflow-hidden">
-            <div className="absolute inset-0 bg-primary opacity-80"></div>
+        <section className="min-h-screen bg-primary flex flex-col items-center justify-center text-secondary relative overflow-hidden pt-20 md:pt-0">
+            {/* Added padding-top for mobile to avoid overlap with menu, md:pt-0 to reset on larger screens */}
+            <div className="absolute inset-0 bg-primary opacity-80 z-0"></div>
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-center px-4 z-10"
+                className="text-center px-4 sm:px-6 lg:px-8 z-10 flex-grow flex flex-col justify-center"
             >
-                <h1 className="text-5xl font-bold mb-6 text-secondary">
-                    GenAI-Lösungen, die <span className="text-accent">Impact</span> haben
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 md:mb-6 text-secondary">
+                    Ihr Partner für <span className="text-accent">Generative KI</span> in Unternehmen
                 </h1>
-                <p className="text-xl mb-8 text-secondary">
-                    Ich helfe Ihnen, <b>verborgene KI-Use-Cases</b> zu finden, die einen nachweisbaren <b>Mehrwert</b> liefern.
+                <p className="text-lg sm:text-xl md:text-2xl mb-6 md:mb-8 text-secondary max-w-xl mx-auto">
+                    Wir unterstützen Konzerne und Mittelständler dabei, das volle Potenzial von GenAI zu erschließen – von der Strategie bis zur Implementierung wertschöpfender Anwendungsfälle.
                 </p>
-                {/* 1. Button links to ROI Calculation page */}
                 <Link href="/roi" passHref>
-                    <button className="bg-accent text-secondary px-8 py-3 rounded-lg hover:scale-105 transition-transform">
-                        Jetzt Use-Case prüfen →
+                    <button className="bg-accent text-secondary px-6 py-3 sm:px-8 sm:py-3 rounded-lg text-base sm:text-lg hover:scale-105 transition-transform transform active:scale-95">
+                        Potenzialanalyse starten
                     </button>
                 </Link>
             </motion.div>
-            <div className="absolute bottom-0 left-0 w-full h-[400px] md:h-[400px] lg:h-[400px]">
-                <canvas className="w-full h-full" ref={canvasRef} />
+            <div className="w-full h-[250px] sm:h-[300px] md:h-[400px] z-0"> {/* Adjusted height for responsiveness */}
+                {isMounted && <canvas className="w-full h-full" ref={canvasRef} />}
             </div>
         </section>
     );
